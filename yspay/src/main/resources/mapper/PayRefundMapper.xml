@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yishang.yspay.mapper.PayRefundMapper">
+
+    <!-- Page<PayRefund> payRefundListByRoot(Page<PayRefund> querypage, Map<String, String> params, SysUser user); -->
+    <select id="payRefundListByRoot" resultType="com.yishang.yspay.bean.PayRefund">
+        SELECT r.*,m.MerchName merchantName,o.PayState paystate,o.Money money FROM Pay_Refund r
+        LEFT JOIN Pay_Orders o on o.RefundOrderNo = r.RefundOrderNo
+        LEFT JOIN Pay_Merchant m on m.Appkey = o.AppKey
+        LEFT JOIN Pay_Branch b ON m.BranchId = b.ID
+        LEFT JOIN Pay_Club c ON b.ClubId = c.id
+	    <where>
+            <if test="user.isroot == 2">
+               c.id = #{user.clubid}
+            </if>
+            <if test="user.isroot == 3">
+               b.id = #{user.branchid}
+            </if>
+            <if test="user.isroot == 4">
+               m.id = #{user.merchantid}
+            </if>
+
+            <if test="params.merchantName !=null and params.merchantName !=''">
+                and m.MerchName like '%${params.merchantName}%'
+            </if>
+
+            <if test="params.payorderno !=null and params.payorderno !=''">
+                and r.PayOrderNo like '%${params.payorderno}%'
+            </if>
+
+            <if test="params.startTime != null and params.startTime != ''">
+                and r.RefundTime >= #{params.startTime}
+            </if>
+
+            <if test="params.endTime != null and params.endTime != ''">
+                and #{params.endTime} >= r.RefundTime
+            </if>
+     </where>
+        <if test="params.sorts == 1">
+            ORDER BY r.RefundTime asc
+        </if>
+        <if test="params.sorts == 2">
+            ORDER BY r.RefundTime desc
+        </if>
+    </select>
+
+</mapper>

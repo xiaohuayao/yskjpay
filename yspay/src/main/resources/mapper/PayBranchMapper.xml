@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yishang.yspay.mapper.PayBranchMapper">
+
+	<!-- IPage<PayBranch> getList(Page<PayBranch> page, @Param("params") Map<String, String> params); -->
+	<select id="getList" resultType="com.yishang.yspay.bean.PayBranch">
+    	SELECT
+			pb.* ,
+			pc.ClubName
+		FROM
+			Pay_Branch pb
+		LEFT JOIN Pay_Club pc ON pc.ID = pb.ClubId
+		<where>
+			<if test="params.branchname !=null and params.branchname !=''">
+				and pb.BranchName like '%${params.branchname}%'
+			</if>
+			<if test="params.principal !=null and params.principal !=''">
+				and pb.Principal like '%${params.principal}%'
+			</if>
+			<if test="params.clubId !=null and params.clubId !=''">
+				and PC.ID = #{params.clubId}
+			</if>
+		</where>
+	</select>
+
+
+</mapper>

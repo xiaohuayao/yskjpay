@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yishang.yspay.mapper.PayOrderMapper">
+
+    <!--商户流水查询-->
+    <select id="streamPage" resultType="com.yishang.yspay.bean.PayOrder">
+        select
+        o.ID,o.OrderNo,o.Money,o.AppKey,o.AuthCode,o.OperaUser,o.PayState,o.PayDate,o.PayType,o.PayChannel,o.CreateTime,
+        m.MerchName merchantName,o.RefundOrderNo,m.SwiffPassMerchNo swiffpassmerchno
+        from Pay_Orders o
+        left join Pay_Merchant m on o.AppKey = m.Appkey
+        left join Pay_Branch b on b.ID = m.BranchId
+        left join Pay_Club c on c.ID = b.ClubId
+        <where>
+            <if test="search.isRoot == 2">
+                and c.ID = #{search.clubid}
+            </if>
+            <if test="search.isRoot == 3">
+                and b.ID = #{search.branchid}
+            </if>
+            <if test="search.isRoot == 4">
+                and m.ID = #{search.merchantid}
+            </if>
+            <if test="search.startTime != null and search.startTime != ''">
+                and o.PayDate >= #{search.startTime}
+            </if>
+            <if test="search.endTime != null and search.endTime != ''">
+                and #{search.endTime} >= o.PayDate
+            </if>
+            <if test="search.paytype != null and search.startTime != ''">
+                and o.PayType = #{search.paytype}
+            </if>
+            <if test="search.merchantName != null and search.merchantName != ''">
+                and m.MerchName like concat('%',#{search.merchantName},'%')
+            </if>
+            <if test="search.swiffpassmerchno != null and search.swiffpassmerchno != ''">
+                and (m.SwiffPassMerchNo like concat('%',#{search.swiffpassmerchno},'%')
+                or m.MerId like concat('%',#{search.swiffpassmerchno},'%'))
+            </if>
+            <if test="search.paychannel != null ">
+                and o.PayChannel = #{search.paychannel}
+            </if>
+            <if test="search.operauser != null and search.operauser != ''">
+                and o.OperaUser like concat('%',#{search.operauser},'%')
+            </if>
+        </where>
+        <if test="search.sortRule == 1">
+            <if test="search.sorts == 1">
+                ORDER BY o.PayDate asc
+            </if>
+            <if test="search.sorts == 2">
+                ORDER BY o.PayDate desc
+            </if>
+        </if>
+        <if test="search.sortRule == 2">
+            <if test="search.sorts == 1">
+                ORDER BY o.CreateTime asc
+            </if>
+            <if test="search.sorts == 2">
+                ORDER BY o.CreateTime desc
+            </if>
+        </if>
+    </select>
+
+    <!--获取各状态下的订单数-->
+    <select id="statisticsOrder" resultType="com.yishang.yspay.bean.vo.CollectVo">
+        select o.PayState payState,count(*) num
+        from Pay_Orders o
+        left join Pay_Merchant m on o.AppKey = m.Appkey
+        left join Pay_Branch b on b.ID = m.BranchId
+        left join Pay_Club c on c.ID = b.ClubId
+        <where>
+            <if test="search.isRoot == 2">
+                and c.ID = #{search.clubid}
+            </if>
+            <if test="search.isRoot == 3">
+                and b.ID = #{search.branchid}
+            </if>
+            <if test="search.isRoot == 4">
+                and m.ID = #{search.merchantid}
+            </if>
+            <if test="search.startTime != null and search.startTime != ''">
+                and o.PayDate >= #{search.startTime}
+            </if>
+            <if test="search.endTime != null and search.endTime != ''">
+                and #{search.endTime} >= o.PayDate
+            </if>
+            <if test="search.paytype != null and search.startTime != ''">
+                and o.PayType = #{search.paytype}
+            </if>
+            <if test="search.merchantName != null and search.merchantName != ''">
+                and m.MerchName like concat('%',#{search.merchantName},'%')
+            </if>
+            <if test="search.swiffpassmerchno != null and search.swiffpassmerchno != ''">
+                and (m.SwiffPassMerchNo like concat('%',#{search.swiffpassmerchno},'%')
+                or m.MerId like concat('%',#{search.swiffpassmerchno},'%'))
+            </if>
+            <if test="search.paychannel != null ">
+                and o.PayChannel = #{search.paychannel}
+            </if>
+            <if test="search.operauser != null and search.operauser != ''">
+                and o.OperaUser like concat('%',#{search.operauser},'%')
+            </if>
+        </where>
+        GROUP BY o.PayState
+    </select>
+
+    <!--根据查询条件求已支付订单金额总数-->
+    <select id="sumOrderMoney" resultType="java.math.BigDecimal">
+        select ISNULL(SUM(o.Money),0)
+        from Pay_Orders o
+        left join Pay_Merchant m on o.AppKey = m.Appkey
+        left join Pay_Branch b on b.ID = m.BranchId
+        left join Pay_Club c on c.ID = b.ClubId
+        <where>
+            <if test="search.isRoot == 2">
+                and c.ID = #{search.clubid}
+            </if>
+            <if test="search.isRoot == 3">
+                and b.ID = #{search.branchid}
+            </if>
+            <if test="search.isRoot == 4">
+                and m.ID = #{search.merchantid}
+            </if>
+            <if test="search.startTime != null and search.startTime != ''">
+                and o.PayDate >= #{search.startTime}
+            </if>
+            <if test="search.endTime != null and search.endTime != ''">
+                and #{search.endTime} >= o.PayDate
+            </if>
+            <if test="search.paytype != null and search.paytype != ''">
+                and o.PayType = #{search.paytype}
+            </if>
+            <if test="search.merchantName != null and search.merchantName != ''">
+                and m.MerchName like concat('%',#{search.merchantName},'%')
+            </if>
+            <if test="search.swiffpassmerchno != null and search.swiffpassmerchno != ''">
+                and (m.SwiffPassMerchNo like concat('%',#{search.swiffpassmerchno},'%')
+                or m.MerId like concat('%',#{search.swiffpassmerchno},'%'))
+            </if>
+            <if test="search.paychannel != null ">
+                and o.PayChannel = #{search.paychannel}
+            </if>
+            <if test="search.operauser != null and search.operauser != ''">
+                and o.OperaUser like concat('%',#{search.operauser},'%')
+            </if>
+        </where>
+    </select>
+    <!--网点汇总-->
+    <select id="collectListBranch" resultType="com.yishang.yspay.bean.vo.CollectVo">
+        select b.branchname,(ac.money - ac.sumRefund) money,ac.orderCount from Pay_Branch b
+        LEFT JOIN Pay_Club c ON b.ClubId = c.ID
+        left join (SELECT
+            b.ID,
+            ISNULL(SUM( po.Money ),0) AS money,
+            ISNULL(sum(pr.RefundAmount),0) sumRefund,
+            COUNT ( po.OrderNo ) AS orderCount
+            FROM Pay_Merchant pm
+            LEFT JOIN Pay_Orders po ON po.AppKey = pm.Appkey
+            LEFT JOIN Pay_Branch b ON pm.BranchId = b.ID
+            LEFT JOIN Pay_Club c ON b.ClubId = c.ID
+            LEFT JOIN Pay_Refund pr ON po.OrderNo = pr.PayOrderNo
+            <where>
+                po.PayState IN (1,2)
+                <if test="user.isRoot == 2">
+                    and c.ID = #{user.clubid}
+                </if>
+
+                <if test="user.isRoot == 3">
+                    and b.ID = #{user.branchid}
+                </if>
+                <if test="params.search != null and params.search != ''">
+                    and b.branchname like '%${params.search}%'
+                </if>
+                <if test="params.startTime != null and params.startTime != ''">
+                    and po.PayDate >= #{params.startTime}
+                </if>
+                <if test="params.endTime != null and params.endTime != ''">
+                    and #{params.endTime} >= po.PayDate
+                </if>
+            </where>
+            GROUP BY b.ID
+        ) ac on ac.ID = b.ID
+        <where>
+            <if test="user.isRoot == 2">
+                c.ID = #{user.clubid}
+            </if>
+
+            <if test="user.isRoot == 3">
+                b.ID = #{user.branchid}
+            </if>
+            <if test="params.search != null and params.search != ''">
+                and b.branchname like '%${params.search}%'
+            </if>
+        </where>
+        ORDER BY ac.money desc
+    </select>
+
+    <!--行社汇总-->
+    <select id="collectListClub" resultType="com.yishang.yspay.bean.vo.CollectVo">
+        select c.clubname,(ac.money - ac.sumRefund) money,ac.orderCount from Pay_Club c
+        left join (SELECT
+            c.ID,
+            ISNULL(SUM( po.Money ),0) AS money,
+            ISNULL(sum(pr.RefundAmount),0) sumRefund,
+            COUNT ( po.OrderNo ) AS orderCount
+            FROM Pay_Merchant pm
+            LEFT JOIN Pay_Orders po ON po.AppKey = pm.Appkey
+            LEFT JOIN Pay_Branch b ON pm.BranchId = b.ID
+            LEFT JOIN Pay_Club c ON b.ClubId = c.ID
+            LEFT JOIN Pay_Refund pr ON po.OrderNo = pr.PayOrderNo
+            <where>
+                po.PayState IN (1,2)
+                <if test="user.isRoot == 2">
+                    and c.ID = #{user.clubid}
+                </if>
+                <if test="params.search != null and params.search != ''">
+                    and c.clubname like '%${params.search}%'
+                </if>
+                <if test="params.startTime != null and params.startTime != ''">
+                    and po.PayDate >= #{params.startTime}
+                </if>
+
+                <if test="params.endTime != null and params.endTime != ''">
+                    and #{params.endTime} >= po.PayDate
+                </if>
+            </where>
+            GROUP BY c.ID
+        ) ac on ac.ID = c.ID
+        <where>
+            <if test="user.isRoot == 2">
+                and c.ID = #{user.clubid}
+            </if>
+            <if test="params.search != null and params.search != ''">
+                and c.clubname like '%${params.search}%'
+            </if>
+        </where>
+        ORDER BY ac.money desc
+    </select>
+
+    <!--商户汇总修改版-->
+    <select id="collectListMerchPlus" resultType="com.yishang.yspay.bean.vo.CollectVo">
+        select a.* from (
+            select
+                    Pm.MerchName merchname,
+                            su.sumMoney money ,
+                            su.sumCount orderCount,
+                            su.sumRefund  refundMoney ,
+                            su.totalRefundCount refundCount ,
+                            (su.sumMoney - su.sumRefund) moneyTrue ,
+                    pm.SwiffPassMerchNo swiffpassmerchno,
+                            sw.swMoney swiffMoney,
+                            sw.swCount swiffCount,
+                            sw.swRefund swiffRefundMoney,
+                            sw.swRefundCount swiffRefundCount ,
+                            (sw.swMoney - sw.swRefund) swiffMoneyTrue,
+                    pm.MerId merid,
+                            mer.merMoney merMoney,
+                            mer.merCount merCount,
+                            mer.merRefund merRefundMoney ,
+                            mer.merRefundCount merRefundCount ,
+                            (mer.merMoney - mer.merRefund) merMoneyTrue
+                from Pay_Merchant pm
+                left join (select m.ID sumId,count(o.ID) sumCount,sum(o.Money) sumMoney,ISNULL(sum(r.RefundAmount),0) sumRefund ,COUNT(r.ID) totalRefundCount from Pay_Merchant m
+                    left join Pay_Orders o on o.AppKey = m.AppKey
+                    left join Pay_Refund r on r.PayOrderNo = o.OrderNo
+                    left join Pay_Branch b on b.ID = m.BranchId
+                    left join Pay_Club c on c.ID = b.ClubId
+                    <where>
+                        o.PayState in (1,2,3)
+                        <if test="params.startTime != null and params.startTime != ''">
+                            and o.PayDate >= #{params.startTime}
+                        </if>
+
+                        <if test="params.endTime != null and params.endTime != ''">
+                            and #{params.endTime} >= o.PayDate
+                        </if>
+                    </where>
+                    GROUP BY m.ID) su on su.sumId = pm.ID
+                left join (select m.ID swId,sum(o.Money) swMoney,ISNULL(sum(r.RefundAmount),0) swRefund ,COUNT(r.ID) swRefundCount ,COUNT(o.OrderNo) swCount from Pay_Merchant m
+                    left join Pay_Orders o on o.AppKey = m.AppKey
+                    left join Pay_Refund r on r.PayOrderNo = o.OrderNo
+                    left join Pay_Branch b on b.ID = m.BranchId
+                    left join Pay_Club c on c.ID = b.ClubId
+                    <where>
+                        o.PayState in (1,2,3)
+                        and o.PayChannel = 1
+                        <if test="params.startTime != null and params.startTime != ''">
+                            and o.PayDate >= #{params.startTime}
+                        </if>
+
+                        <if test="params.endTime != null and params.endTime != ''">
+                            and #{params.endTime} >= o.PayDate
+                        </if>
+                    </where>
+                    GROUP BY m.ID) sw on pm.ID = sw.swId
+                left join (select m.ID merId,count(o.ID) merCount,sum(o.Money) merMoney,ISNULL(sum(r.RefundAmount),0) merRefund ,COUNT(r.ID) merRefundCount  from Pay_Merchant m
+                    left join Pay_Orders o on o.AppKey = m.AppKey
+                    left join Pay_Refund r on r.PayOrderNo = o.OrderNo
+                    left join Pay_Branch b on b.ID = m.BranchId
+                    left join Pay_Club c on c.ID = b.ClubId
+                    <where>
+                        o.PayState in (1,2,3)
+                        and o.PayChannel = 2
+                        <if test="params.startTime != null and params.startTime != ''">
+                            and o.PayDate >= #{params.startTime}
+                        </if>
+
+                        <if test="params.endTime != null and params.endTime != ''">
+                            and #{params.endTime} >= o.PayDate
+                        </if>
+                    </where>
+                    GROUP BY m.ID) mer on mer.merId = pm.ID
+                    <where>
+                        <if test="params.search != null and params.search != ''">
+                            and (Pm.MerchName like '%${params.search}%'
+                            or Pm.SwiffPassMerchNo like '%${params.search}%'
+                            or Pm.MerId like '%${params.search}%')
+                        </if>
+                        <if test="user.isRoot == 2">
+                            and pm.branchid in (SELECT b.id from Pay_Branch b where b.ClubId = #{user.clubid})
+                        </if>
+                        <if test="user.isRoot == 3">
+                            and pm.branchid = #{user.branchid}
+                        </if>
+                        <if test="user.isRoot == 4">
+                            and pm.ID = #{user.merchantid}
+                        </if>
+                    </where>
+        )a ORDER BY a.money desc
+    </select>
+
+    <!--获取交易和退款汇总（交易笔数、交易金额、退款笔数、退款金额）-->
+    <select id="selectDealAndRefundCollect" resultType="com.yishang.yspay.bean.vo.HomePageVo">
+        select count(o.ID) dealStock,ISNULL(sum(o.Money), 0) dealMoney,count(r.ID) refundStock,ISNULL(sum(r.RefundAmount), 0) refundMoney from Pay_Orders o
+        left join Pay_Merchant m on o.AppKey = m.AppKey
+        left join Pay_Refund r on r.PayOrderNo = o.OrderNo
+        left join Pay_Branch b on b.ID = m.BranchId
+        left join Pay_Club c on c.ID = b.ClubId
+        <where>
+            o.PayState in (1,2,3)
+            <if test="user.isroot == 2">
+                and c.ID = #{user.clubid}
+            </if>
+            <if test="user.isroot == 3">
+                and b.ID = #{user.branchid}
+            </if>
+            <if test="user.isroot == 4">
+                and m.ID = #{user.merchantid}
+            </if>
+            <if test="startTime != null">
+                and o.PayDate >= #{startTime}
+            </if>
+            <if test="endTime != null">
+                and #{endTime} >= o.PayDate
+            </if>
+        </where>
+    </select>
+
+    <!--商户流水导出-->
+    <select id="selectStreamExcelList" resultType="com.yishang.yspay.bean.PayOrder">
+        select
+        o.ID,o.OrderNo,o.Money,o.AppKey,o.AuthCode,o.OperaUser,o.PayState,o.PayDate,
+        o.PayType,o.CreateTime,o.PayChannel,
+        m.MerchName merchantName,o.RefundOrderNo,m.SwiffPassMerchNo swiffpassmerchno,
+        (case o.PayState when 0 then '未支付' when 1 then '已支付' when 2 then '部分退款' else '全额退款' end) PayStateNames,
+        (case o.PayChannel when 1 then '威富通'  else '统一收单' end) payChannelName
+        from Pay_Orders o
+        left join Pay_Merchant m on o.AppKey = m.Appkey
+        left join Pay_Branch b on b.ID = m.BranchId
+        left join Pay_Club c on c.ID = b.ClubId
+        <where>
+            <if test="search.isRoot == 2">
+                and c.ID = #{search.clubid}
+            </if>
+            <if test="search.isRoot == 3">
+                and b.ID = #{search.branchid}
+            </if>
+            <if test="search.isRoot == 4">
+                and m.ID = #{search.merchantid}
+            </if>
+            <if test="search.startTime != null and search.startTime != ''">
+                and o.PayDate >= #{search.startTime}
+            </if>
+            <if test="search.endTime != null and search.endTime != ''">
+                and #{search.endTime} >= o.PayDate
+            </if>
+            <if test="search.paytype != null and search.startTime != ''">
+                and o.PayType = #{search.paytype}
+            </if>
+            <if test="search.merchantName != null and search.merchantName != ''">
+                and m.MerchName like concat('%',#{search.merchantName},'%')
+            </if>
+            <if test="search.swiffpassmerchno != null and search.swiffpassmerchno != ''">
+                and (m.SwiffPassMerchNo like concat('%',#{search.swiffpassmerchno},'%')
+                or m.MerId like concat('%',#{search.swiffpassmerchno},'%'))
+            </if>
+            <if test="search.paychannel != null ">
+                and o.PayChannel = #{search.paychannel}
+            </if>
+            <if test="search.operauser != null and search.operauser != ''">
+                and o.OperaUser like concat('%',#{search.operauser},'%')
+            </if>
+        </where>
+        <if test="search.sortRule == 1">
+            <if test="search.sorts == 1">
+                ORDER BY o.PayDate asc
+            </if>
+            <if test="search.sorts == 2">
+                ORDER BY o.PayDate desc
+            </if>
+        </if>
+        <if test="search.sortRule == 2">
+            <if test="search.sorts == 1">
+                ORDER BY o.CreateTime asc
+            </if>
+            <if test="search.sorts == 2">
+                ORDER BY o.CreateTime desc
+            </if>
+        </if>
+    </select>
+
+</mapper>

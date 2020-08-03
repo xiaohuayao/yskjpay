@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yishang.yspay.mapper.SysUserMapper">
+
+    <!-- SysUser myGetById(String id); -->
+    <select id="myGetById" resultType="com.yishang.yspay.bean.SysUser">
+        SELECT u.*,r.RoleName rolename,c.ClubName clubname,b.BranchName branchname,m.MerchName merchantname
+        FROM Sys_Users u
+        LEFT JOIN Sys_Roles r on u.RoleId = r.id
+        LEFT JOIN Pay_Club c on u.ClubId = c.id
+        LEFT JOIN Pay_Branch b on u.BranchId = b.id
+        LEFT JOIN Pay_Merchant m on u.MerchantId = m.id
+        where
+            u.id = #{id}
+    </select>
+
+    <!-- IPage<SysUser> getList(Page<PayBranch> page, @Param("params") Map<String, String> params); -->
+    <select id="getList" resultType="com.yishang.yspay.bean.SysUser">
+        SELECT su.*  ,pm.MerchName merchantname,pb.BranchName ,pc.clubname ,sr.RoleName from Sys_Users su
+        LEFT JOIN Pay_Merchant pm on su.MerchantId = pm.id
+        LEFT JOIN Pay_Branch pb on su.BranchId = pb.id
+        LEFT JOIN Pay_Club pc on su.ClubId = pc.id
+        LEFT JOIN Sys_Roles sr on su.roleid = sr.ID
+        <where>
+            <if test="params.username !=null and params.username !=''">
+                and su.username like '%${params.username}%'
+            </if>
+            <if test=" user.isroot == 2 ">
+                and (pc.id = #{user.clubid} or pb.ClubId = #{user.clubid} or pm.BranchId in (SELECT pb.ID from Pay_Branch pb WHERE pb.ClubId  = #{user.clubid}))
+            </if>
+            <if test="user.isroot==3">
+                and (su.BranchId = #{user.branchid} or pm.BranchId = #{user.branchid})
+            </if>
+            <if test="user.isroot==4">
+                and  su.merchantid = #{user.merchantid}
+            </if>
+            <if test="params.isroot !=null and params.isroot !=''">
+                and su.isroot = #{params.isroot}
+            </if>
+            <if test="params.name !=null and params.name !=''">
+                and (pm.merchname like '%${params.name}%'
+                or pb.branchname like '%${params.name}%'
+                or pc.clubname  like '%${params.name}%')
+            </if>
+
+        </where>
+    </select>
+
+    <!--    List<PayMerchant> roleMerch(SysUsers user);-->
+    <select id="roleMerch" resultType="com.yishang.yspay.bean.PayMerchant">
+        SELECT
+            pm.merchname ,pm.id
+        FROM
+            Pay_Merchant pm
+        LEFT JOIN Pay_Branch pb ON pm.BranchId = pb.ID
+        LEFT JOIN Pay_Club pc ON pb.ClubId = pc.ID
+        WHERE
+                pm.BranchId IN( SELECT pb.ID FROM Pay_Branch pb WHERE pb.ClubId = #{clubid} )
+    </select>
+
+
+</mapper>

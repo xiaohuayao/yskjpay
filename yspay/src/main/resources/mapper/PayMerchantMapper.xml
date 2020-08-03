@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yishang.yspay.mapper.PayMerchantMapper">
+
+    <!-- Page<PayMerchant> PayMerchantListByRoot(Page<PayMerchant> page, @Param("params") Map<String, String> params, SysUser user); -->
+    <select id="selectMerchantListByRoot" resultType="com.yishang.yspay.bean.PayMerchant">
+     SELECT m.*,b.BranchName,c.ClubName,(select MAX(PayDate) from Pay_Orders where AppKey = m.Appkey) lastpaytime
+     FROM
+	 Pay_Merchant m
+	 LEFT JOIN Pay_Branch b ON m.BranchId = b.ID
+	 LEFT JOIN Pay_Club c ON b.ClubId = c.id
+	 <where>
+         <if test="user.isroot == 2">
+            c.id = #{user.clubid}
+         </if>
+         <if test="user.isroot == 3">
+            b.id = #{user.branchid}
+         </if>
+         <if test="user.isroot == 4">
+            m.id = #{user.merchantid}
+         </if>
+
+         <if test="params.merchantname !=null and params.merchantname !=''">
+             and m.MerchName like '%${params.merchantname}%'
+         </if>
+         <if test="params.swiffpassmerchno !=null and params.swiffpassmerchno !=''">
+             and m.SwiffPassMerchNo like '%${params.swiffpassmerchno}%'
+         </if>
+         <if test="params.merid !=null and params.merid !=''">
+             and m.MerId like '%${params.merid}%'
+         </if>
+         <if test="params.clubname !=null and params.clubname !=''">
+             and c.ClubName like '%${params.clubname}%'
+         </if>
+         <if test="params.branchname !=null and params.branchname !=''">
+             and b.BranchName like '%${params.branchname}%'
+         </if>
+     </where>
+    </select>
+
+
+    <select id="getMerchantById" resultType="com.yishang.yspay.bean.PayMerchant">
+        SELECT m.*,b.BranchName branchname,c.ClubName,(select MAX(PayDate) from Pay_Orders where AppKey = m.Appkey) lastpaytime
+        FROM
+        Pay_Merchant m
+        LEFT JOIN Pay_Branch b ON m.BranchId = b.ID
+        LEFT JOIN Pay_Club c ON b.ClubId = c.id
+        <where>
+                m.id = #{id}
+        </where>
+    </select>
+</mapper>
